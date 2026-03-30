@@ -2,9 +2,250 @@
 //  InfoTerm AI — Main Application Logic
 // =============================================
 
+// ── State & Translations ─────────────────────────────────────────
+let currentLang = localStorage.getItem('app_lang') || 'uz';
+if (!['uz', 'ru', 'en'].includes(currentLang)) currentLang = 'uz';
+
+let isLightMode = localStorage.getItem('app_theme') === 'light';
+let chatHistory = [];
+try {
+  const saved = localStorage.getItem('chat_history');
+  if (saved) chatHistory = JSON.parse(saved);
+} catch (e) {
+  console.error("History parse error", e);
+  chatHistory = [];
+}
+
+const translations = {
+  uz: {
+    quickTopics: "Tezkor mavzular",
+    aboutBotTitle: "ChatBot haqida",
+    aboutBotCard: "<p>InfoTerm AI faqat <strong>informatika</strong> va <strong>dasturlash</strong> terminlarini izohlaydi.</p><ul><li>✅ Aniq ta'riflar</li><li>✅ Real misollar</li><li>✅ Kod namunalari</li><li>✅ O'zbek tilida</li></ul>",
+    clearChat: "Suhbatni tozalash",
+    statusActive: "Faol",
+    inputPlaceholder: "Informatika termini haqida so'rang... (masalan: 'API nima?')",
+    inputHint: "InfoTerm AI faqat informatika va dasturlash terminlarini izohlaydi",
+    todayQuiz: "Bugungi Test",
+    quizWelcomeTitle: "Bugungi Test",
+    quizWelcomeDesc: "Siz informatika terminlarini qanchalik yaxshi bilasiz? 5 ta tasodifiy savolga javob bering va bilimingizni sinang!",
+    startQuizBtn: "Boshlash",
+    quizResultTitle: "Natijangiz!",
+    retryQuizBtn: "Yenidan urinish",
+    welcomeTitle: "Suhbat tozalandi ✨"
+  },
+  ru: {
+    quickTopics: "Быстрые темы",
+    aboutBotTitle: "О чат-боте",
+    aboutBotCard: "<p>InfoTerm AI объясняет только термины <strong>информатики</strong> и <strong>программирования</strong>.</p><ul><li>✅ Точные определения</li><li>✅ Реальные примеры</li><li>✅ Примеры кода</li><li>✅ На русском</li></ul>",
+    clearChat: "Очистить чат",
+    statusActive: "Активен",
+    inputPlaceholder: "Спросите термин по информатике... (например, 'Что такое API?')",
+    inputHint: "InfoTerm AI объясняет только термины из области ИТ",
+    todayQuiz: "Тест дня",
+    quizWelcomeTitle: "Тест дня",
+    quizWelcomeDesc: "Насколько хорошо вы знаете информатику? Ответьте на 5 случайных вопросов и проверьте себя!",
+    startQuizBtn: "Начать",
+    quizResultTitle: "Ваш результат!",
+    retryQuizBtn: "Попробовать снова",
+    welcomeTitle: "Чат очищен ✨"
+  },
+  en: {
+    quickTopics: "Quick topics",
+    aboutBotTitle: "About ChatBot",
+    aboutBotCard: "<p>InfoTerm AI strictly explains <strong>computer science</strong> & <strong>programming</strong> terms.</p><ul><li>✅ Clear definitions</li><li>✅ Real examples</li><li>✅ Code snippets</li><li>✅ In English</li></ul>",
+    clearChat: "Clear chat",
+    statusActive: "Active",
+    inputPlaceholder: "Ask about a CS term... (e.g. 'What is API?')",
+    inputHint: "InfoTerm AI only answers IT and computer science queries",
+    todayQuiz: "Daily Quiz",
+    quizWelcomeTitle: "Daily Quiz",
+    quizWelcomeDesc: "How well do you know computer science? Answer 5 random questions to test your knowledge!",
+    startQuizBtn: "Start",
+    quizResultTitle: "Your Result!",
+    retryQuizBtn: "Retry",
+    welcomeTitle: "Chat cleared ✨"
+  }
+};
+
+const quizQuestions = [
+  { q: "HTML nima uchun ishlatiladi?", opts: ["Veb sahifa tuzilishi", "Dizayn qilish", "Ma'lumotlar bazasi", "Dastur tuzish"], a: 0 },
+  { q: "Qaysi biri dasturlash tili emas?", opts: ["Python", "Java", "HTML", "C++"], a: 2 },
+  { q: "API qisqartmasi ma'nosi?", opts: ["Advanced Program Interface", "Application Programming Interface", "Auto Process Integration", "Apple Protocol Internet"], a: 1 },
+  { q: "SQL asosan nima uchun ishlatiladi?", opts: ["O'yin yaratish", "Baza (Database) bilan ishlash", "Mobil ilova", "Rasm tahrirlash"], a: 1 },
+  { q: "'Boolean' ma'lumot turi qanday qiymatlar qabul qiladi?", opts: ["0 dan 9 gacha", "Matnli", "True yoki False", "Kasr sonlar"], a: 2 },
+  { q: "CSS ning asosiy vazifasi nima?", opts: ["Mantiq yozish", "Tuzilish yaratish", "Saytni bezash (Styling)", "Xavfsizlik"], a: 2 },
+  { q: "RAM qanday xotira?", opts: ["Doimiy saqlash", "Vaqtinchalik tezkor xotira", "Faqat o'qish uchun", "Bulutdagi xotira"], a: 1 },
+  { q: "Qaysi tarmog' protokoli xavfsiz hisoblanadi?", opts: ["HTTP", "FTP", "HTTPS", "SMTP"], a: 2 },
+  { q: "Frontend dasturchi asosan qaysi tillarda yozadi?", opts: ["C++ va Java", "Python va Ruby", "HTML, CSS, JavaScript", "SQL va PHP"], a: 2 },
+  { q: "GitHub nima?", opts: ["Sayt yaratish dasturi", "Git repozitoriylarini saqlash va jamoa bo'lib ishlash platformasi", "Operatsion tizim", "Yangi proyekt tili"], a: 1 },
+  { q: "IP manzil (IP address) nima?", opts: ["Saytning nomi", "Tarmoqdagi qurilmaning betakror manzili", "Parol", "Xavfsizlik protokoli"], a: 1 },
+  { q: "Loop (Tsikl) nima uchun kerak?", opts: ["Xatoni topish", "Ma'lumotni o'chirish", "Biror amalni qayta-qayta takrorlash", "Rasm chizish"], a: 2 },
+  { q: "Backend dasturchi nima qiladi?", opts: ["Sayt dizayni", "Ma'lumotlar bazasi va server logikasi", "Matn yozish", "Suratlar taxrirlash"], a: 1 },
+  { q: "Algorithm nima?", opts: ["Kompyuter qismi", "Masalani yechish bo'yicha ketma-ket aniq rejalar", "Dasturlash tili", "Qidiruv tizimi"], a: 1 },
+  { q: "Kompilyator (Compiler) vazifasi?", opts: ["Kodni birma-bir o'qish", "Dastur kodini to'liq mashina tiliga o'girib, .exe kabi fayl berish", "Saytni bezash", "Xatolarni yashirish"], a: 1 },
+  { q: "Variable (O'zgaruvchi) nima?", opts: ["Funksiya turi", "Ma'lumot saqlanadigan xotira qutichasi", "Dastur nomi", "Sayt manzili"], a: 1 },
+  { q: "Machine Learning (ML) qaysi sohaga taalluqli?", opts: ["Tarmoqlar", "Ma'lumotlar xavfsizligi", "Sun'iy intellekt (AI)", "UI dizayn"], a: 2 },
+  { q: "Cloud Computing nima?", opts: ["Bulutli ob-havo moduli", "Internet orqali kompyuter resurslaridan masofadan foydalanish", "Telefon xotirasi", "Mahalliy server"], a: 1 },
+  { q: "Docker asosan nima qilib beradi?", opts: ["Sayt tezligini oshiradi", "Dasturni va barcha muhitini alohida konteynerga o'rab beradi", "Kod yozishga yordam beradi", "Fayllarni arxivlaydi"], a: 1 },
+  { q: "JSON (JavaScript Object Notation) asosan nima uchun ishlatiladi?", opts: ["Dizayn uchun", "Server bilan ma'lumot almashish va saqlash formati", "Dastur kompilatsiyasi", "O'yin grafikasi"], a: 1 }
+];
+
+function updateLanguageUI() {
+  try {
+    if (!translations[currentLang]) currentLang = 'uz';
+    
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (translations[currentLang][key]) {
+        el.innerHTML = translations[currentLang][key];
+      }
+    });
+    
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      const key = el.getAttribute('data-i18n-placeholder');
+      if (translations[currentLang][key]) {
+        el.setAttribute('placeholder', translations[currentLang][key]);
+      }
+    });
+
+    // Update status and clear button specifically
+    const headerSub = document.querySelector('.header-sub');
+    const clearChatSpan = document.getElementById('clearChat')?.querySelector('span');
+
+    if (headerSub) {
+      headerSub.textContent = translations[currentLang].statusActive || "Faol";
+    }
+    if (clearChatSpan) {
+      clearChatSpan.textContent = translations[currentLang].clearChat || "Clear";
+    }
+    
+    const langSelect = document.getElementById('langSelect');
+    if (langSelect) langSelect.value = currentLang;
+  } catch (err) {
+    console.error("Update UI error:", err);
+  }
+}
+
+function applyTheme() {
+  if (isLightMode) {
+    document.body.classList.add('light-mode');
+    document.querySelector('.sun-icon').classList.remove('hidden');
+    document.querySelector('.moon-icon').classList.add('hidden');
+  } else {
+    document.body.classList.remove('light-mode');
+    document.querySelector('.sun-icon').classList.add('hidden');
+    document.querySelector('.moon-icon').classList.remove('hidden');
+  }
+}
+
+// Save history wrapper
+function saveHistory() {
+  localStorage.setItem('chat_history', JSON.stringify(chatHistory));
+}
+
+// Load history into UI
+function loadHistoricalMessages() {
+  if (chatHistory.length > 0) {
+    const welcomeScreen = document.getElementById('welcomeScreen');
+    if (welcomeScreen) welcomeScreen.remove();
+    
+    chatHistory.forEach(msg => {
+      if (msg.role === 'user') {
+        addMessage(msg.content, true, true);
+      } else {
+        addBotResponse(msg.payload, true);
+      }
+    });
+  }
+}
+
+// ── Quiz System ────────────────────────────────────────────────
+let currentQuizQuestions = [];
+let maxQuestions = 5;
+let currentQuestionIndex = 0;
+let currentScore = 0;
+
+function shuffle(array) {
+  return array.sort(() => Math.random() - 0.5);
+}
+
+function openQuizModal() {
+  document.getElementById('quizModal').classList.remove('hidden');
+  document.getElementById('quizSetup').classList.remove('hidden');
+  document.getElementById('quizGameplay').classList.add('hidden');
+  document.getElementById('quizResult').classList.add('hidden');
+}
+
+function startQuizGame() {
+  currentQuizQuestions = shuffle([...quizQuestions]).slice(0, maxQuestions);
+  currentQuestionIndex = 0;
+  currentScore = 0;
+  
+  document.getElementById('quizSetup').classList.add('hidden');
+  document.getElementById('quizResult').classList.add('hidden');
+  document.getElementById('quizGameplay').classList.remove('hidden');
+  
+  renderQuizQuestion();
+}
+
+function renderQuizQuestion() {
+  const qObj = currentQuizQuestions[currentQuestionIndex];
+  document.getElementById('quizQuestionCount').textContent = `Savol: ${currentQuestionIndex + 1} / ${maxQuestions}`;
+  document.getElementById('quizScoreLive').textContent = currentScore;
+  document.getElementById('quizProgressFill').style.width = `${((currentQuestionIndex) / maxQuestions) * 100}%`;
+  
+  document.getElementById('quizQuestionText').textContent = qObj.q;
+  
+  const optionsContainer = document.getElementById('quizOptions');
+  optionsContainer.innerHTML = '';
+  
+  qObj.opts.forEach((opt, index) => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-option';
+    btn.textContent = opt;
+    btn.onclick = () => handleQuizAnswer(index, btn, qObj.a);
+    optionsContainer.appendChild(btn);
+  });
+}
+
+function handleQuizAnswer(selectedIndex, btn, correctIndex) {
+  const allBtns = document.getElementById('quizOptions').querySelectorAll('.quiz-option');
+  allBtns.forEach(b => b.onclick = null); // disable clicks
+  
+  if (selectedIndex === correctIndex) {
+    btn.classList.add('correct');
+    currentScore++;
+    document.getElementById('quizScoreLive').textContent = currentScore;
+  } else {
+    btn.classList.add('wrong');
+    allBtns[correctIndex].classList.add('correct');
+  }
+  
+  setTimeout(() => {
+    currentQuestionIndex++;
+    if (currentQuestionIndex < maxQuestions) {
+      renderQuizQuestion();
+    } else {
+      showQuizResult();
+    }
+  }, 1200);
+}
+
+function showQuizResult() {
+  document.getElementById('quizGameplay').classList.add('hidden');
+  document.getElementById('quizResult').classList.remove('hidden');
+  document.getElementById('quizFinalScore').textContent = currentScore;
+  
+  let msg = '';
+  if (currentScore === maxQuestions) msg = "Ajoyib! Siz hamma savolni topdingiz! 🏆";
+  else if (currentScore >= 3) msg = "Yaxshi natija! Bilimlaringizni sinab turishda davom eting. 👍";
+  else msg = "Yomon emas! InfoTerm AI bilan ko'proq suhbatlashing va o'rganing. 📚";
+  
+  document.getElementById('quizResultMessage').textContent = msg;
+}
+
 // ── Knowledge Base ──────────────────────────────────────────────
 const knowledgeBase = {
-  // Algorithms & Data Structures
   "algorithm": {
     definition: "Algorithm — muayyan masalani hal qilish uchun ketma-ket bajariluvchi aniq ko'rsatmalar to'plami.",
     detail: "Algoritm — bu kompyuter dasturlashning asosi. U muammoni bosqichma-bosqich hal qilishning puxta rejasi hisoblanadi. Har bir algoritm aniq kirish (input) oladi, bir qator amallarni bajaradi va natijani (output) qaytaradi. Yaxshi algoritm to'g'ri, samarali va tushunarli bo'lishi lozim. Algoritmlar vaqt murakkabligi (time complexity) va xotira murakkabligi (space complexity) bilan baholanadi.",
@@ -20,7 +261,6 @@ ro'yxat = [10, 25, 8, 42, 15]
 natija = chiziqli_qidiruv(ro'yxat, 42)
 print(f"Element {natija}-indeksda")  # 3-indeksda`
   },
-
   "variable": {
     definition: "Variable (O'zgaruvchi) — dasturda ma'lumotlarni saqlash uchun xotiradagi nomlanган joy.",
     detail: "O'zgaruvchi — bu qutichaga o'xshaydi: unga har xil qiymat solib, keyin ishlatishingiz mumkin. O'zgaruvchilar nom (identifier), qiymat (value) va tur (type) dan iborat bo'ladi. Dasturlashda o'zgaruvchilar muhim, chunki ular ma'lumotlarni dinamik tarzda saqlash va o'zgartirish imkonini beradi. Ko'pgina tillarda o'zgaruvchi e'lon qilishdan oldin turini belgilash kerak.",
@@ -38,7 +278,6 @@ let shahar = "Toshkent";
 const PI = 3.14159;
 var soni = 42;`
   },
-
   "api": {
     definition: "API (Application Programming Interface) — dasturlar o'rtasida muloqot qilish imkonini beruvchi interfeys.",
     detail: "API — bu restoran menyusiga o'xshaydi: siz nima buyurtma berishingizni bilasiz, oshxona esa uni qanday tayyorlashini. API orqali bir dastur boshqa dastur xizmatlaridan foydalanadi. Masalan, ilovalar ob-havo ma'lumotlarini OpenWeatherMap API orqali oladi. API REST, GraphQL, SOAP va boshqa turlarida bo'lishi mumkin. JSON yoki XML formatida ma'lumot uzatadi.",
@@ -58,7 +297,6 @@ async function ob_havoOlish(shahar) {
   "holat": "Quyoshli"
 }`
   },
-
   "database": {
     definition: "Database (Ma'lumotlar bazasi) — tizimli tarzda saqlangan va boshqariladigan katta hajmdagi ma'lumotlar to'plami.",
     detail: "Ma'lumotlar bazasi — bu ulkan elektron arxiv. Unda ma'lumotlar jadvallar (tables), hujjatlar (documents) yoki graflar shaklida saqlanadi. Ma'lumotlar bazasini boshqarish uchun DBMS (Database Management System) ishlatiladi. MySQL, PostgreSQL, MongoDB, SQLite — eng mashhur tizimlar. Ikki asosiy tur mavjud: Relyatsion (SQL) va Norelyatsion (NoSQL).",
@@ -81,7 +319,6 @@ FROM talabalar
 WHERE ball > 90
 ORDER BY ball DESC;`
   },
-
   "machine learning": {
     definition: "Machine Learning (Mashina o'rganishi) — kompyuterga aniq dasturlamsdan, ma'lumotlardan o'z-o'zidan o'rganish qobiliyatini beradigan AI sohasi.",
     detail: "ML — bu boladek: bola ko'plab mushuklar rasmini ko'rib, 'mushuk nima' deb tushunadi. Xuddi shunday, ML modeli minglab misollardan o'rganib, yangi ma'lumotlarni tasniflaydi. Asosiy turlari: Supervised Learning (nazoratli), Unsupervised Learning (nazorat qilinmaydigan) va Reinforcement Learning (mukofot asosida). Amaliyotda spam-filtrlash, tavsiya tizimlari, tibbiy tashxislarda ishlatilади.",
@@ -102,7 +339,6 @@ model.fit(X, y)
 narx = model.predict([[6]])
 print(f"6 xonali uy narxi: {narx[0]:.0f} ming $")`
   },
-
   "recursion": {
     definition: "Recursion (Rekursiya) — funksiya o'zini-o'zi chaqirishi orqali masalani hal qilish usuli.",
     detail: "Rekursiya — bu oynalarni bir-biriga qaratish kabi: siz cheksiz ko'rinish ko'rasiz. Lekin dasturlashda rekursiya cheksiz emas — u bazaviy holat (base case) ga yetganda to'xtaydi. Rekursiya murakkab masalalarni kichik bo'laklarga bo'lib hal qilishga yordam beradi. Daraxt (tree) va graflarни o'tishda, dynamic programming da keng ishlatiladi. Muhim: bazaviy holatsiz rekursiya Stack Overflow xatosiga olib keladi.",
@@ -126,7 +362,6 @@ function fibonacci(n) {
 }
 // fibonacci(6) → 8`
   },
-
   "oop": {
     definition: "OOP (Object-Oriented Programming — Ob'ektga Yo'naltirilgan Dasturlash) — dasturni real dunyodagi ob'ektlar asosida modellashtirish paradigmasi.",
     detail: "OOP — real dunyoni dasturda tasvirlash usuli. Masalan, 'Avtomobil' degan sinf (class) yaratib, uning xususiyatlari (rang, tezlik) va harakatlari (yur, to'xta) ni belgilaysiz. OOP to'rtta asosiy tamoyilga asoslanadi: Encapsulation (qadoqlash), Inheritance (meros), Polymorphism (ko'p shakllilik) va Abstraction (abstraksiya). Ko'pchilik zamonaviy tillar OOP qo'llab-quvvatlaydi: Java, Python, C++, C#.",
@@ -153,7 +388,6 @@ mushuk = Mushuk("Yulduz", "mushuk")
 print(it.ovoz_chiqar())     # Vov vov!
 print(mushuk.ovoz_chiqar()) # Miyov!`
   },
-
   "git": {
     definition: "Git — dastur kodidagi o'zgarishlarni kuzatib boruvchi, jamoa ishini boshqaruvchi versiyalarni boshqarish tizimi.",
     detail: "Git — bu kod tarixi. Har bir o'zgarish (commit) saqlanib, kerak bo'lsa oldingi holatga qaytish mumkin. Linus Torvalds tomonidan 2005-yilda yaratilgan. GitHub va GitLab kabi platformalar orqali jamoa a'zolari bir loyihada parallel ishlaydi. Asosiy tushunchalar: repository (ombor), commit, branch (shox), merge, push, pull.",
@@ -182,7 +416,6 @@ git push origin main
 # Yangi branch
 git checkout -b yangi-funksiya`
   },
-
   "docker": {
     definition: "Docker — dasturni barcha kerakli komponentlari bilan birga konteynerga joylashtirib, har qanday muhitda ishlatish imkonini beruvchi platforma.",
     detail: "Docker — bu yuklarni tashuv konteynerlari kabi. Dasturingizni 'quticha'ga solar ekan siz, u quticha ixtiyoriy kompyuterda bir xil ishlaydi. 'Mening kompyuterimda ishlaydi' muammosini hal qiladi. Asosiy tushunchalar: Image (tasvir), Container (konteyner), Dockerfile, Docker Hub. Dasturni boshqa muhitga ko'chirish, test qilish va deploy qilishni osonlashtiradi. Kubernetes bilan birgalikda katta tizimlarda ishlatiladi.",
@@ -210,7 +443,6 @@ docker run -p 8000:8000 mening-ilovam:1.0
 # Ishlab turgan konteynerlar
 docker ps`
   },
-
   "encryption": {
     definition: "Encryption (Shifrlash) — ma'lumotni faqat maxsus kalit egasigina o'qiy oladigan tarzda o'zgartirish jarayoni.",
     detail: "Shifrlash — bu maxfiy xat yozishga o'xshaydi: harflarni o'rnini almashtirish orqali. Zamonaviy shifrlash esa juda murakkab matematik algoritmlardan foydalanadi. Ikki asosiy tur: Simmetrik (bir xil kalit) va Asimmetrik (ochiq va yopiq kalit juftligi). HTTPS veb-saytlarda, WhatsApp xabarlarida, bank operatsiyalarida ishlatiladi. AES, RSA, SHA eng mashhur algoritmlar.",
@@ -234,10 +466,9 @@ print(f"Shifrlangan: {shifr}")  # VDORP
 deshifr = shifrlash(shifr, -3)
 print(f"Qayta ochildi: {deshifr}")  # SALOM`
   },
-
   "cloud computing": {
     definition: "Cloud Computing (Bulut hisoblash) — internet orqali kompyuter resurslari (server, xotira, dastur) ni ijaraga olish texnologiyasi.",
-    detail: "Bulut hisoblash — bu elektr energiyasi kabi: siz generatorsiz turasiz, lekin elektr ishlatasiz. Xuddi shunday, o'z serveringiz bo'lmasdan ham katta hisoblash kuchidan foydalanasiz. AWS, Google Cloud, Microsoft Azure — eng yirik provayderlar. IaaS (Infrastructure), PaaS (Platform), SaaS (Software) — asosiy xizmat modellari. Miqyoslilik (scalability) va tejamkorlik asosiy afzalliklari.",
+    detail: "Cloud Computing — bu elektr energiyasi kabi: siz generatorsiz turasiz, lekin elektr ishlatasiz. Xuddi shunday, o'z serveringiz bo'lmasdan ham katta hisoblash kuchidan foydalanasiz. AWS, Google Cloud, Microsoft Azure — eng yirik provayderlar. IaaS (Infrastructure), PaaS (Platform), SaaS (Software) — asosiy xizmat modellari. Miqyoslilik (scalability) va tejamkorlik asosiy afzalliklari.",
     example: "🌍 Real misol: Google Drive — fayllaringiz sizning kompyuterda emas, Googlening serverlarida. Siz istalgan qurilmadan, istalgan joydan ularga kira olasiz. Bu bulut xizmati.",
     code: `# AWS S3 ga fayl yuklash (Python boto3)
 import boto3
@@ -262,7 +493,6 @@ print("✅ Fayl bulutga yuklandi!")
 # PaaS: Heroku, Google App Engine
 # IaaS: AWS EC2, Azure VMs`
   },
-
   "compiler": {
     definition: "Compiler (Kompilyator) — yuqori darajali dasturlash tilini mashina tiliga to'liq tarjima qiluvchi dastur.",
     detail: "Kompilyator — bu kitob tarjimoniga o'xshaydi: butun kitobni o'qib, boshqa tilda yozadi. Dastur manba kodi (C, C++, Go) avval to'liq kompilatsiya qilinadi, keyin bajariladigan fayl (.exe) hosil bo'ladi. Afzalliklari: tez bajariladi, xatolar kompilyatsiyada aniqlanadi. Kamchiligi: har bir platforma uchun alohida kompilatsiya kerak.",
@@ -288,7 +518,6 @@ int main() {
 // 3. Assembly (assembly kodi)
 // 4. Linking (bog'lash)`
   },
-
   "interpreter": {
     definition: "Interpreter (Interpretator) — dastur kodini satr-satr tarjima qilib, darhol bajaruvchi dastur.",
     detail: "Interpretator — bu tilmochga o'xshaydi: har bir gapni eshitib, darhol tarjima qiladi. Python, JavaScript, Ruby interpretatsiya qilinuvchi tillar. Kod avval to'liq tarjima qilinmaydi — har bir qator o'qilib, bajariladi. Afzalliklari: platformastandart, debug qilish oson. Kamchiligi: kompilatsiya qilingan dasturlarga nisbatan sekinroq.",
@@ -309,7 +538,6 @@ print(f"x = {x}")            # ← shu payt bajarilar
 # Compiler: kitobni tarjima → keyin o'qi
 # Interpreter: kitobni gapir → darhol tarjima`
   },
-
   "big data": {
     definition: "Big Data — an'anaviy vositalar bilan qayta ishlash qiyin bo'lgan juda katta hajmdagi, turli xil va tez o'zuvchi ma'lumotlar to'plami.",
     detail: "Big Data 5V tamoyili bilan tavsiflanadi: Volume (hajm — petabaytlar), Velocity (tezlik — real-time), Variety (xilma-xillik — matn, rasm, video), Veracity (ishonchlilik) va Value (qiymat). Hadoop, Apache Spark — asosiy texnologiyalar. Big Data biznesda qarorlar qabul qilish, mijozlarni tahlil qilish, tibbiyot va meteorologiyada keng ishlatiladi.",
@@ -319,8 +547,8 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import count, avg
 
 # Spark session yaratish
-spark = SparkSession.builder \\
-    .appName("InfoTermAnaliz") \\
+spark = SparkSession.builder \
+    .appName("InfoTermAnaliz") \
     .getOrCreate()
 
 # Katta CSV faylni o'qish (GB/TB hajmda)
@@ -329,15 +557,14 @@ df = spark.read.csv("savdo_malumotlari.csv",
                      inferSchema=True)
 
 # Shahar bo'yicha o'rtacha savdo
-natija = df.groupBy("shahar") \\
+natija = df.groupBy("shahar") \
            .agg(count("id").alias("soni"),
-                avg("summa").alias("o_rtacha")) \\
+                avg("summa").alias("o_rtacha")) \
            .orderBy("o_rtacha", ascending=False)
 
 natija.show(10)
 # Milliardlab qatorni minutlarda tahlil qiladi`
   },
-
   "artificial intelligence": {
     definition: "Artificial Intelligence (Sun'iy Intellekt — AI) — kompyuterlarga inson zehni bilan bajariladigan vazifalarni bajarishga imkon beruvchi texnologiya sohasi.",
     detail: "AI — bu kompyuterni 'aqlli' qilish sa'y-harakati. O'rganish (Learning), fikrlash (Reasoning) va muammo hal qilish (Problem Solving) AI ning asosiy yo'nalishlari. Zamonaviy AI: Machine Learning, Deep Learning, Natural Language Processing (NLP), Computer Vision kabi tarmoqlari bor. ChatGPT, Google Bard, DALL-E — zamonaviy AI tizimlari. AI tor (narrow AI) va umumiy (AGI) turlarga bo'linadi.",
@@ -369,7 +596,6 @@ print(javob.choices[0].message.content)
 # RL     → O'yinlar, robotika
 # ML     → Bashorat, tasniflash`
   },
-
   "internet protocol": {
     definition: "Internet protokollari — qurilmalar internetda bir-biri bilan qanday muloqot qilishi kerakligini belgilovchi standart qoidalar to'plami.",
     detail: "Protokollar — bu til qoidalari kabi. HTTP/HTTPS veb-sahifalar uchun, SMTP email uchun, FTP fayl uzatish uchun, TCP/IP asosiy ma'lumot uzatish uchun. TCP (Transmission Control Protocol) ma'lumotni to'g'ri yetkazilishini ta'minlaydi. IP (Internet Protocol) manzillash tizimini belgilaydi. DNS domen nomlarini IP manzillarga tarjima qiladi.",
@@ -398,7 +624,7 @@ Content-Type: application/json
 # FTP         → fayl uzatish (21-port)
 # SSH         → xavfsiz ulanish (22-port)
 # DNS         → nom → IP tarjima (53-port)`
-  }
+  },
 };
 
 // ── Off-topic keywords ──────────────────────────────────────────
