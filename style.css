@@ -788,3 +788,132 @@ html, body {
   .chat-header { padding: 0 14px; }
   .input-area { padding: 10px 14px 14px; }
 }
+
+/* ── Quiz Modal ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.modal-overlay:not(.hidden) { /* Important to let hidden state hide it */
+  opacity: 1;
+  pointer-events: all;
+}
+.quiz-modal {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  width: 90%;
+  max-width: 500px;
+  box-shadow: var(--shadow-glow);
+  padding: 30px;
+  position: relative;
+  transform: translateY(20px) scale(0.95);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  color: var(--text-primary);
+}
+.modal-overlay:not(.hidden) .quiz-modal {
+  transform: translateY(0) scale(1);
+}
+.modal-close {
+  position: absolute;
+  top: 16px; right: 16px;
+  background: var(--bg-card);
+  border: none;
+  color: var(--text-muted);
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+.modal-close:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+.quiz-hero { text-align: center; margin-bottom: 30px; }
+.quiz-huge-icon { font-size: 60px; line-height: 1; display: block; margin-bottom: 10px; animation: welcomePulse 3s infinite; }
+.quiz-hero h2 { font-size: 24px; color: var(--primary); margin-bottom: 10px; }
+.quiz-hero p { font-size: 14.5px; color: var(--text-secondary); line-height: 1.6; }
+
+.start-quiz-btn {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 15px var(--primary-dim);
+}
+.start-quiz-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,212,255,0.3); }
+
+.quiz-progress-bar {
+  height: 6px; background: var(--bg-card); border-radius: 3px; overflow: hidden; margin-bottom: 20px;
+}
+.quiz-progress-fill {
+  height: 100%; background: var(--primary); width: 0%; transition: width 0.3s ease;
+}
+.quiz-headering {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-size: 14px; font-weight: 500; color: var(--text-muted);
+}
+.quiz-score-live { color: #f59e0b; font-weight: 700; }
+.quiz-question { font-size: 18px; line-height: 1.5; margin-bottom: 24px; }
+
+.quiz-options { display: flex; flex-direction: column; gap: 10px; }
+.quiz-option {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 14.5px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+}
+.quiz-option:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--primary-dim);
+}
+.quiz-option.correct {
+  background: rgba(34, 197, 94, 0.1); border-color: #22c55e; color: #22c55e;
+}
+.quiz-option.wrong {
+  background: rgba(239, 68, 68, 0.1); border-color: #ef4444; color: #ef4444;
+}
+
+.quiz-result-header { text-align: center; margin-bottom: 30px; }
+.quiz-trophy { font-size: 60px; display: block; margin-bottom: 10px; }
+.quiz-score-final { font-size: 40px; font-weight: 700; color: var(--primary); margin: 15px 0; }
+.quiz-result-msg { font-size: 15px; color: var(--text-secondary); line-height: 1.6; }
+.hidden { display: none !important; }
+
+/* ── Sidebar Quiz Button ── */
+.quiz-btn {
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+  background: linear-gradient(135deg, rgba(168,85,247,0.1), rgba(0,212,255,0.1));
+  border: 1px solid var(--border-glow);
+  color: var(--primary);
+  padding: 12px; border-radius: var(--radius-md);
+  cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 600;
+  transition: all var(--transition);
+}
+.quiz-btn:hover {
+  background: linear-gradient(135deg, rgba(168,85,247,0.2), rgba(0,212,255,0.2));
+  transform: translateY(-2px); box-shadow: 0 4px 15px var(--primary-dim);
+}
