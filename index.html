@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InfoTerm AI — Informatika Terminlari Chatboti</title>
+  <meta name="description" content="InfoTerm AI — O'zbek tilida informatika va dasturlash terminlarini izohlash bo'yicha aqlli chatbot." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Animated background -->
+  <div class="bg-grid"></div>
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+  <div class="bg-orb orb-3"></div>
+
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-wrap">
+          <div class="logo-icon">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <circle cx="14" cy="14" r="13" stroke="url(#g1)" stroke-width="2"/>
+              <path d="M8 14h12M14 8v12M10 10l8 8M18 10l-8 8" stroke="url(#g2)" stroke-width="1.5" stroke-linecap="round"/>
+              <defs>
+                <linearGradient id="g1" x1="0" y1="0" x2="28" y2="28">
+                  <stop stop-color="#00d4ff"/>
+                  <stop offset="1" stop-color="#7b2ff7"/>
+                </linearGradient>
+                <linearGradient id="g2" x1="0" y1="0" x2="28" y2="28">
+                  <stop stop-color="#00d4ff"/>
+                  <stop offset="1" stop-color="#7b2ff7"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <span class="logo-text">InfoTerm <span class="logo-ai">AI</span></span>
+        </div>
+        <button class="sidebar-toggle" id="sidebarClose" title="Yopish">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M6 14L14 6M6 6l8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="sidebar-section">
+        <p class="sidebar-label">Tezkor mavzular</p>
+        <div class="quick-topics">
+          <button class="topic-btn" data-q="Algorithm nima?">🔁 Algorithm</button>
+          <button class="topic-btn" data-q="API nima?">🔌 API</button>
+          <button class="topic-btn" data-q="Machine Learning nima?">🤖 Machine Learning</button>
+          <button class="topic-btn" data-q="Database nima?">🗄️ Database</button>
+          <button class="topic-btn" data-q="Cloud computing nima?">☁️ Cloud Computing</button>
+          <button class="topic-btn" data-q="Recursion nima?">♻️ Recursion</button>
+          <button class="topic-btn" data-q="OOP nima?">📦 OOP</button>
+          <button class="topic-btn" data-q="Git nima?">🌿 Git</button>
+          <button class="topic-btn" data-q="Docker nima?">🐳 Docker</button>
+          <button class="topic-btn" data-q="Encryption nima?">🔐 Encryption</button>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <p class="sidebar-label">ChatBot haqida</p>
+        <div class="about-card">
+          <p>InfoTerm AI faqat <strong>informatika</strong> va <strong>dasturlash</strong> terminlarini izohlaydi.</p>
+          <ul>
+            <li>✅ Aniq ta'riflar</li>
+            <li>✅ Real misollar</li>
+            <li>✅ Kod namunalari</li>
+            <li>✅ O'zbek tilida</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <button class="clear-btn" id="clearChat">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14H6L5 6"/>
+            <path d="M10 11v6M14 11v6"/>
+          </svg>
+          Suhbatni tozalash
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main chat area -->
+    <main class="chat-main">
+      <!-- Top bar -->
+      <header class="chat-header">
+        <button class="menu-btn" id="menuBtn" title="Menyu">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <path d="M3 6h16M3 11h16M3 16h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <div class="header-title">
+          <div class="status-dot"></div>
+          <span>InfoTerm AI</span>
+          <span class="header-sub">Faol</span>
+        </div>
+        <div class="header-actions">
+          <div class="lang-badge">O'zbek</div>
+        </div>
+      </header>
+
+      <!-- Messages -->
+      <div class="messages-container" id="messagesContainer">
+        <!-- Welcome message -->
+        <div class="welcome-screen" id="welcomeScreen">
+          <div class="welcome-icon">
+            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+              <circle cx="32" cy="32" r="30" stroke="url(#wg)" stroke-width="2" opacity="0.6"/>
+              <path d="M20 32h24M32 20v24M24 24l16 16M40 24L24 40" stroke="url(#wg2)" stroke-width="2.5" stroke-linecap="round"/>
+              <circle cx="32" cy="32" r="4" fill="url(#wg2)" opacity="0.8"/>
+              <defs>
+                <linearGradient id="wg" x1="0" y1="0" x2="64" y2="64">
+                  <stop stop-color="#00d4ff"/>
+                  <stop offset="1" stop-color="#7b2ff7"/>
+                </linearGradient>
+                <linearGradient id="wg2" x1="0" y1="0" x2="64" y2="64">
+                  <stop stop-color="#00d4ff"/>
+                  <stop offset="1" stop-color="#a855f7"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <h1 class="welcome-title">InfoTerm AI ga xush kelibsiz!</h1>
+          <p class="welcome-desc">Men informatika va dasturlash terminlarini <strong>o'zbek tilida</strong> izohlayman. Quyidagi mavzulardan birini tanlang yoki o'z savolingizni yozing.</p>
+          <div class="welcome-chips">
+            <button class="chip" data-q="Algorithm nima?">Algorithm nima?</button>
+            <button class="chip" data-q="Variable nima?">Variable nima?</button>
+            <button class="chip" data-q="Internet protokollari haqida">Internet protokollari</button>
+            <button class="chip" data-q="Artificial Intelligence nima?">AI nima?</button>
+            <button class="chip" data-q="Big Data nima?">Big Data</button>
+            <button class="chip" data-q="Compiler va Interpreter farqi nima?">Compiler vs Interpreter</button>
+          </div>
+        </div>
+
+        <div class="messages-list" id="messagesList"></div>
+      </div>
+
+      <!-- Input area -->
+      <div class="input-area">
+        <div class="input-wrapper">
+          <button class="input-icon-btn" title="Tezkor mavzular" id="quickBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+          </button>
+          <textarea
+            id="userInput"
+            class="chat-input"
+            placeholder="Informatika termini haqida so'rang... (masalan: 'API nima?')"
+            rows="1"
+            maxlength="500"
+          ></textarea>
+          <button class="send-btn" id="sendBtn" title="Yuborish">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M22 2L11 13" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+        <p class="input-hint">InfoTerm AI faqat informatika va dasturlash terminlarini izohlaydi</p>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
