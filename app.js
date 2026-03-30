@@ -495,7 +495,11 @@ async function generateResponse(input) {
         messages: [
           {
             role: "system",
-            content: "Sen informatika va dasturlash atamalarini tushuntirib beruvchi sun'iy intellekt (InfoTerm AI)san. Javoblaringni qat'iy ravishda o'zbek tilida ber. Tushuntirishlaring aniq, sodda va amaliy misollar bilan boyitilgan bo'lsin. Iloji boricha mavzular bo'ylab yaxshi formatlangan markdown shaklida (bullet-pointlar bilan) taqdim et."
+            content: currentLang === 'ru'
+              ? "Ты AI помощник InfoTerm AI. Объясняй термины информатики на русском языке. Будь кратким, полезным и используй Markdown."
+              : currentLang === 'en'
+              ? "You are InfoTerm AI. Explain computer science terms strictly in English. Be precise, use simple terms and Markdown format."
+              : "Sen informatika va dasturlash atamalarini tushuntirib beruvchi sun'iy intellekt (InfoTerm AI)san. Javoblaringni qat'iy ravishda o'zbek tilida ber. Tushuntirishlaring aniq, sodda va amaliy misollar bilan boyitilgan bo'lsin. Iloji boricha mavzular bo'ylab yaxshi formatlangan markdown shaklida (bullet-pointlar bilan) taqdim et."
           },
           { role: "user", content: input }
         ],
@@ -585,8 +589,7 @@ function renderSimpleResponse(text) {
   return div;
 }
 
-// ── DOM helpers ────────────────────────────────────────────────
-function addMessage(text, isUser) {
+function addMessage(text, isUser, skipSave = false) {
   const welcomeScreen = document.getElementById('welcomeScreen');
   if (welcomeScreen) {
     welcomeScreen.style.animation = 'none';
@@ -598,24 +601,29 @@ function addMessage(text, isUser) {
 
   const list = document.getElementById('messagesList');
   const msgDiv = document.createElement('div');
-  msgDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+  msgDiv.className = `message user`;
 
   const avatar = document.createElement('div');
-  avatar.className = `avatar ${isUser ? 'user-avatar' : 'bot-avatar'}`;
-  avatar.textContent = isUser ? '👤' : '🤖';
+  avatar.className = `avatar user-avatar`;
+  avatar.textContent = '👤';
 
   const bubble = document.createElement('div');
   bubble.className = 'bubble';
   bubble.textContent = text;
-  bubble.style.color = isUser ? '#d0e4ff' : 'var(--text-primary)';
+  bubble.style.color = '#d0e4ff';
 
   msgDiv.appendChild(avatar);
   msgDiv.appendChild(bubble);
   list.appendChild(msgDiv);
   scrollToBottom();
+
+  if (!skipSave) {
+    chatHistory.push({ role: 'user', content: text });
+    saveHistory();
+  }
 }
 
-function addBotResponse(response) {
+function addBotResponse(response, skipSave = false) {
   const list = document.getElementById('messagesList');
   const msgDiv = document.createElement('div');
   msgDiv.className = 'message bot';
@@ -635,6 +643,11 @@ function addBotResponse(response) {
   msgDiv.appendChild(bubble);
   list.appendChild(msgDiv);
   scrollToBottom();
+
+  if (!skipSave) {
+    chatHistory.push({ role: 'ai', payload: response });
+    saveHistory();
+  }
 }
 
 function showTyping() {
@@ -698,12 +711,35 @@ async function sendMessage(inputText) {
 
 // ── Event Listeners ────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  // Init History & UI
+  updateLanguageUI();
+  applyTheme();
+  loadHistoricalMessages();
+
   const input = document.getElementById('userInput');
   const sendBtn = document.getElementById('sendBtn');
   const clearBtn = document.getElementById('clearChat');
   const menuBtn = document.getElementById('menuBtn');
   const sidebarClose = document.getElementById('sidebarClose');
   const sidebar = document.getElementById('sidebar');
+
+  // New UI Elements
+  const themeToggle = document.getElementById('themeToggle');
+  const langSelect = document.getElementById('langSelect');
+  
+  // Theme Toggler
+  themeToggle.addEventListener('click', () => {
+    isLightMode = !isLightMode;
+    localStorage.setItem('app_theme', isLightMode ? 'light' : 'dark');
+    applyTheme();
+  });
+  
+  // Language Selector
+  langSelect.addEventListener('change', (e) => {
+    currentLang = e.target.value;
+    localStorage.setItem('app_lang', currentLang);
+    updateLanguageUI();
+  });
 
   // Auto-resize textarea
   input.addEventListener('input', () => {
@@ -754,6 +790,10 @@ document.addEventListener('DOMContentLoaded', () => {
   clearBtn.addEventListener('click', () => {
     const list = document.getElementById('messagesList');
     list.innerHTML = '';
+    
+    // Clear memory
+    chatHistory = [];
+    localStorage.removeItem('chat_history');
 
     // Re-add welcome screen
     const container = document.getElementById('messagesContainer');
@@ -777,8 +817,8 @@ document.addEventListener('DOMContentLoaded', () => {
             </defs>
           </svg>
         </div>
-        <h1 class="welcome-title">Suhbat tozalandi ✨</h1>
-        <p class="welcome-desc">Yangi savolingizni yozing yoki tezkor mavzulardan birini tanlang.</p>
+        <h1 class="welcome-title" data-i18n="welcomeTitle">Suhbat tozalandi ✨</h1>
+        <p class="welcome-desc" data-i18n="quizWelcomeDesc">Siz informatika terminlarini qanchalik yaxshi bilasiz? 5 ta tasodifiy savolga javob bering va bilimingizni sinang!</p>
         <div class="welcome-chips">
           <button class="chip" data-q="Algorithm nima?">Algorithm nima?</button>
           <button class="chip" data-q="Variable nima?">Variable nima?</button>
@@ -789,6 +829,22 @@ document.addEventListener('DOMContentLoaded', () => {
       container.insertBefore(welcome, list);
     }
   });
+
+  // Quiz Modal Actions
+  document.getElementById('startQuizBtn').addEventListener('click', () => {
+    openQuizModal();
+    if (window.innerWidth < 768) {
+      sidebar.classList.add('collapsed');
+      sidebar.classList.remove('open');
+    }
+  });
+  
+  document.getElementById('closeQuizBtn').addEventListener('click', () => {
+    document.getElementById('quizModal').classList.add('hidden');
+  });
+  
+  document.getElementById('startQuizGameBtn').addEventListener('click', startQuizGame);
+  document.getElementById('quizRetryBtn').addEventListener('click', startQuizGame);
 
   // Focus input
   input.focus();
