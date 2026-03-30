@@ -985,9 +985,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Sidebar toggle
   menuBtn.addEventListener('click', () => {
-    sidebar.classList.toggle('collapsed');
-    sidebar.classList.toggle('open');
+    if (window.innerWidth < 768) {
+      sidebar.classList.toggle('open');
+    } else {
+      sidebar.classList.toggle('collapsed');
+    }
   });
+
+  const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+  if (sidebarBackdrop) {
+    sidebarBackdrop.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+    });
+  }
 
   sidebarClose.addEventListener('click', () => {
     sidebar.classList.add('collapsed');
@@ -999,7 +1009,6 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', () => {
       sendMessage(btn.dataset.q);
       if (window.innerWidth < 768) {
-        sidebar.classList.add('collapsed');
         sidebar.classList.remove('open');
       }
     });
