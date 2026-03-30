@@ -138,7 +138,7 @@ html, body {
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
               width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
               background var(--transition);
-  z-index: 100;
+  z-index: 1000;
 }
 
 .sidebar.collapsed {
@@ -772,12 +772,24 @@ html, body {
     position: fixed;
     left: 0; top: 0; bottom: 0;
     transform: translateX(-100%);
+    width: var(--sidebar-width) !important;
+    min-width: var(--sidebar-width) !important;
+    z-index: 2000;
   }
   .sidebar.open {
     transform: translateX(0);
   }
-  .sidebar.collapsed {
-    transform: translateX(-100%);
+  /* Overlay for mobile */
+  .sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 1999;
+  }
+  .sidebar.open + .sidebar-backdrop {
+    display: block;
   }
   .bubble { max-width: 88%; }
 }
