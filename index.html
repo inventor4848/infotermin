@@ -48,7 +48,7 @@
       </div>
 
       <div class="sidebar-section">
-        <p class="sidebar-label">Tezkor mavzular</p>
+        <p class="sidebar-label" data-i18n="quickTopics">Tezkor mavzular</p>
         <div class="quick-topics">
           <button class="topic-btn" data-q="Algorithm nima?">🔁 Algorithm</button>
           <button class="topic-btn" data-q="API nima?">🔌 API</button>
@@ -63,9 +63,16 @@
         </div>
       </div>
 
+      <div class="sidebar-section quiz-section">
+        <button class="quiz-btn" id="startQuizBtn">
+          <span class="quiz-icon">🎯</span>
+          <span data-i18n="todayQuiz">Bugungi Test</span>
+        </button>
+      </div>
+
       <div class="sidebar-section">
-        <p class="sidebar-label">ChatBot haqida</p>
-        <div class="about-card">
+        <p class="sidebar-label" data-i18n="aboutBotTitle">ChatBot haqida</p>
+        <div class="about-card" data-i18n="aboutBotCard">
           <p>InfoTerm AI faqat <strong>informatika</strong> va <strong>dasturlash</strong> terminlarini izohlaydi.</p>
           <ul>
             <li>✅ Aniq ta'riflar</li>
@@ -83,7 +90,7 @@
             <path d="M19 6l-1 14H6L5 6"/>
             <path d="M10 11v6M14 11v6"/>
           </svg>
-          Suhbatni tozalash
+          <span data-i18n="clearChat">Suhbatni tozalash</span>
         </button>
       </div>
     </aside>
@@ -100,10 +107,20 @@
         <div class="header-title">
           <div class="status-dot"></div>
           <span>InfoTerm AI</span>
-          <span class="header-sub">Faol</span>
+          <span class="header-sub" data-i18n="statusActive">Faol</span>
         </div>
         <div class="header-actions">
-          <div class="lang-badge">O'zbek</div>
+          <button class="theme-toggle" id="themeToggle" title="Temani o'zgartirish">
+            <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            <svg class="sun-icon hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+          </button>
+          <div class="lang-selector">
+            <select id="langSelect">
+              <option value="uz" selected>O'zbek</option>
+              <option value="ru">Русский</option>
+              <option value="en">English</option>
+            </select>
+          </div>
         </div>
       </header>
 
@@ -154,6 +171,7 @@
           <textarea
             id="userInput"
             class="chat-input"
+            data-i18n-placeholder="inputPlaceholder"
             placeholder="Informatika termini haqida so'rang... (masalan: 'API nima?')"
             rows="1"
             maxlength="500"
@@ -165,9 +183,46 @@
             </svg>
           </button>
         </div>
-        <p class="input-hint">InfoTerm AI faqat informatika va dasturlash terminlarini izohlaydi</p>
+        <p class="input-hint" data-i18n="inputHint">InfoTerm AI faqat informatika va dasturlash terminlarini izohlaydi</p>
       </div>
     </main>
+  </div>
+
+  <!-- Quiz Modal Overlay -->
+  <div class="modal-overlay hidden" id="quizModal">
+    <div class="modal-content quiz-modal">
+      <button class="modal-close" id="closeQuizBtn">&times;</button>
+      <div id="quizSetup">
+        <div class="quiz-hero">
+          <span class="quiz-huge-icon">🎯</span>
+          <h2 data-i18n="quizWelcomeTitle">Bugungi Test</h2>
+          <p data-i18n="quizWelcomeDesc">Siz informatika terminlarini qanchalik yaxshi bilasiz? 5 ta tasodifiy savolga javob bering va bilimingizni sinang!</p>
+        </div>
+        <button class="start-quiz-btn" id="startQuizGameBtn" data-i18n="startQuizBtn">Boshlash</button>
+      </div>
+
+      <div id="quizGameplay" class="hidden">
+        <div class="quiz-progress-bar">
+          <div class="quiz-progress-fill" id="quizProgressFill" style="width: 20%"></div>
+        </div>
+        <div class="quiz-headering">
+          <span class="quiz-question-counter" id="quizQuestionCount">Savol: 1 / 5</span>
+          <span class="quiz-score-live">🔥 <span id="quizScoreLive">0</span></span>
+        </div>
+        <h3 class="quiz-question" id="quizQuestionText"></h3>
+        <div class="quiz-options" id="quizOptions"></div>
+      </div>
+
+      <div id="quizResult" class="hidden">
+        <div class="quiz-result-header">
+          <span class="quiz-trophy">🏆</span>
+          <h2 data-i18n="quizResultTitle">Natijangiz!</h2>
+          <p class="quiz-score-final"><span id="quizFinalScore"></span> / 5</p>
+          <p class="quiz-result-msg" id="quizResultMessage"></p>
+        </div>
+        <button class="start-quiz-btn quiz-retry" id="quizRetryBtn" data-i18n="retryQuizBtn">Yenidan urinish</button>
+      </div>
+    </div>
   </div>
 
   <script src="app.js?v=2.0"></script>
